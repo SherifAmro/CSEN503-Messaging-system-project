@@ -1,0 +1,13 @@
+{
+  "name": "csen503-chat-server",
+  "version": "0.1.0",
+  "description": "Real-time messaging server (CSEN 503)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test-client": "node test-client.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
