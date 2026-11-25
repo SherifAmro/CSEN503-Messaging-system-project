@@ -17,20 +17,21 @@ const os = require("os");
 const { WebSocketServer } = require("ws");
 const clients = require("./clients");
 const { routeMessage } = require("./router");
+const { serveClient } = require("./static");
 
 const PORT = process.env.PORT || 3000;
 const HEARTBEAT_MS = 10_000; // how often we ping clients to detect dead sockets
 
-// Plain HTTP server. Later it can also serve the built React client
-// and the metrics page (Person 4).
+// One HTTP server for everything: the health check, the React app, and
+// (through the "upgrade" request) the WebSocket. Phones need one address.
 const server = http.createServer((req, res) => {
   if (req.url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ok: true, online: clients.onlineUsers() }));
     return;
   }
-  res.writeHead(404);
-  res.end("Not found");
+  // TODO (Person 4): handle the metrics page route here, before the client.
+  serveClient(req, res);
 });
 
 const wss = new WebSocketServer({ server });
@@ -107,11 +108,11 @@ wss.on("close", () => clearInterval(heartbeat));
 // Listen on all interfaces (0.0.0.0) so phones on the same Wi-Fi can connect.
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server listening on port ${PORT}`);
-  console.log("Phones on the same Wi-Fi can connect to:");
+  console.log("Phones on the same Wi-Fi: open this in the browser:");
   for (const addrs of Object.values(os.networkInterfaces())) {
     for (const a of addrs || []) {
       if (a.family === "IPv4" && !a.internal) {
-        console.log(`  ws://${a.address}:${PORT}`);
+        console.log(`  http://${a.address}:${PORT}`);
       }
     }
   }
